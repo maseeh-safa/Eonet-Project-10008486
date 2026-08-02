@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}My Watchlist - NASA Natural Events Tracker{% endblock %}
+
+{% block content %}
+
+<!-- ===== HEADER ===== -->
+<div class="watchlist-header">
+    <div>
+        <h2>⭐ My Watchlist</h2>
+        <p class="text-muted">{{ count }} events in your watchlist</p>
+    </div>
+    <div>
+        <a href="/watchlist/export" class="btn btn-info">📥 Export CSV</a>
+    </div>
+</div>
+
+<!-- ===== SEARCH, FILTERS & SORT ===== -->
+<div class="watchlist-controls">
+    <form method="GET" action="/watch" class="controls-form">
+        <!-- Search Bar -->
+        <div class="control-group search-group">
+            <input type="text" 
+                   name="search" 
+                   placeholder="🔍 Search by title or category..." 
+                   value="{{ search_query or '' }}"
+                   class="search-input">
+        </div>
+
+        <!-- Category Filter -->
+        <div class="control-group">
+            <select name="category" class="filter-select">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.slug }}" {% if category_filter == cat.slug %}selected{% endif %}>
+                        {{ cat.label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Notes / Alert Filter -->
+        <div class="control-group">
+            <select name="status" class="filter-select">
+                <option value="">All Events</option>
+                <option value="has_note" {% if status_filter == 'has_note' %}selected{% endif %}>📝 Has Note</option>
+                <option value="no_note" {% if status_filter == 'no_note' %}selected{% endif %}>📭 No Note</option>
+                <option value="alert_on" {% if status_filter == 'alert_on' %}selected{% endif %}>🔔 Alert On</option>
+                <option value="alert_off" {% if status_filter == 'alert_off' %}selected{% endif %}>🔕 Alert Off</option>
+            </select>
+        </div>
+
+        <!-- Sort -->
+        <div class="control-group">
+            <select name="sort" class="sort-select">
+                <option value="saved_at_desc" {% if sort_by == 'saved_at_desc' %}selected{% endif %}>📅 Newest First</option>
+                <option value="saved_at_asc" {% if sort_by == 'saved_at_asc' %}selected{% endif %}>📅 Oldest First</option>
+                <option value="title_asc" {% if sort_by == 'title_asc' %}selected{% endif %}>🔤 Title A-Z</option>
+                <option value="title_desc" {% if sort_by == 'title_desc' %}selected{% endif %}>🔤 Title Z-A</option>
+                <option value="date_asc" {% if sort_by == 'date_asc' %}selected{% endif %}>📅 Event Date (Oldest)</option>
+                <option value="date_desc" {% if sort_by == 'date_desc' %}selected{% endif %}>📅 Event Date (Newest)</option>
+                <option value="status_asc" {% if sort_by == 'status_asc' %}selected{% endif %}>📌 Status A-Z</option>
+                <option value="status_desc" {% if sort_by == 'status_desc' %}selected{% endif %}>📌 Status Z-A</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Apply</button>
+
+        {% if search_query or category_filter or status_filter or sort_by != 'saved_at_desc' %}
+            <a href="/watch" class="btn btn-secondary">Clear All</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- ===== WATCHLIST CARDS ===== -->
+{% if events %}
+    <div class="card-grid">
+        {% for event in events %}
+            <div class="card {% if event.alert_active and event.is_active() %}alert-active{% endif %}">
+                <div class="event-title">
+                    <a href="/event/{{ event.get_eonet_id() }}">{{ event.title }}</a>
+                    {% if event.alert_active %}
+                        <span class="badge badge-alert">🔔 ALERT</span>
+                    {% endif %}
+                </div>
+
+                <div style="margin: 8px 0;">
+                    <span class="badge badge-category">{{ event.category }}</span>
+                    <span class="badge {% if event.is_active() %}badge-open{% else %}badge-closed{% endif %}">
+                        {{ event.status }}
+                    </span>
+                </div>
+
+                <div class="event-date">📅 {% if event.event_date %}{{ event.event_date }}{% else %}Date unknown{% endif %}</div>
+                <div class="event-location">📍 {% if event.latitude != 0 or event.longitude != 0 %}{{ event.latitude|round(2) }}, {{ event.longitude|round(2) }}{% else %}Location unknown{% endif %}</div>
+
+                {% if event.magnitude %}
+                    <div class="event-magnitude">📊 {{ event.magnitude }} {{ event.mag_unit or '' }}</div>
+                {% endif %}
+
+                <div class="event-note">
+                    {% if event.note %}
+                        💬 {{ event.note }}
+                    {% else %}
+                        <span class="text-muted">No note</span>
+                    {% endif %}
+                </div>
+
+                <div class="btn-group">
+                    <form action="/watch/remove/{{ event.get_eonet_id() }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this event from your watchlist?');">
+                        <button type="submit" class="btn btn-danger">🗑️ Remove</button>
+                    </form>
+
+                    <a href="/watch/note/{{ event.get_eonet_id() }}" class="btn btn-info">📝 Edit Note</a>
+
+                    <form action="/watch/toggle/{{ event.get_eonet_id() }}" method="POST">
+                        <button type="submit" class="btn {% if event.alert_active %}btn-danger{% else %}btn-warning{% endif %}">
+                            {% if event.alert_active %}🔕 Disable Alert{% else %}🔔 Enable Alert{% endif %}
+                        </button>
+                    </form>
+                </div>
+
+                <div class="saved-at">Saved: {{ event.saved_at if event.saved_at else 'N/A' }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    
+    <!-- ===== PAGINATION ===== -->
+    <div class="pagination">
+
+        {# ---- Show navigation buttons ONLY if more than 1 page ---- #}
+        {% if total_pages > 1 %}
+            {# First page #}
+            {% if page > 1 %}
+                <a href="{{ url_for('watchlist', page=1, per_page=per_page, search=search_query, category=category_filter, status=status_filter, sort=sort_by) }}" class="btn btn-secondary">⏮ First</a>
+            {% endif %}
+
+            {# Previous page #}
+            {% if page > 1 %}
+                <a href="{{ url_for('watchlist', page=page-1, per_page=per_page, search=search_query, category=category_filter, status=status_filter, sort=sort_by) }}" class="btn btn-secondary">← Previous</a>
+            {% endif %}
+
+            {# Current page info #}
+            <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+
+            {# Next page #}
+            {% if page < total_pages %}
+                <a href="{{ url_for('watchlist', page=page+1, per_page=per_page, search=search_query, category=category_filter, status=status_filter, sort=sort_by) }}" class="btn btn-secondary">Next →</a>
+            {% endif %}
+
+            {# Last page #}
+            {% if page < total_pages %}
+                <a href="{{ url_for('watchlist', page=total_pages, per_page=per_page, search=search_query, category=category_filter, status=status_filter, sort=sort_by) }}" class="btn btn-secondary">Last ⏭</a>
+            {% endif %}
+
+        {% else %}
+            {# ---- If only 1 page, just show "Page 1 of 1" ---- #}
+            <span class="page-info">Page 1 of 1</span>
+        {% endif %}
+
+        {# ---- Per Page Selector - ALWAYS VISIBLE ---- #}
+        <span style="margin-left: 15px; font-size: 0.85em; color: #555;">
+            Show:
+            <select onchange="window.location.href=this.value" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd; cursor: pointer;">
+                <option value="{{ url_for('watchlist', page=1, per_page=5, search=search_query, category=category_filter, status=status_filter, sort=sort_by) }}" {% if per_page == 5 %}selected{% endif %}>5</option>
+                <option value="{{ url_for('watchlist', page=1, per_page=10, search=search_query, category=category_filter, status=status_filter, sort=sort_by) }}" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="{{ url_for('watchlist', page=1, per_page=25, search=search_query, category=category_filter, status=status_filter, sort=sort_by) }}" {% if per_page == 25 %}selected{% endif %}>25</option>
+                <option value="{{ url_for('watchlist', page=1, per_page=50, search=search_query, category=category_filter, status=status_filter, sort=sort_by) }}" {% if per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+            per page
+        </span>
+
+    </div>  {# end .pagination #}
+
+{% else %}
+    <div class="empty-state">
+        <div class="icon">📭</div>
+        <h2>No events found</h2>
+        <p>
+            {% if search_query or category_filter or status_filter %}
+                Try adjusting your search or filters.
+            {% else %}
+                Browse events from NASA and save the ones you want to track!
+            {% endif %}
+        </p>
+        <a href="/browse" class="btn btn-primary">🌍 Browse Events</a>
+    </div>
+{% endif %}
+
+{% endblock %}

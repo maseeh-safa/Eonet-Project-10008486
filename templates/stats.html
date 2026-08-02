@@ -1,0 +1,113 @@
+
+{% extends "base.html" %}
+
+{% block title %}Statistics - NASA Natural Events Tracker{% endblock %}
+
+{% block content %}
+<h2>📊 Statistics</h2>
+
+{% if stats.total > 0 %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="icon">📋</div>
+            <div class="number">{{ stats.total }}</div>
+            <div class="label">Total Events</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="icon">🔔</div>
+            <div class="number">{{ stats.with_alerts }}</div>
+            <div class="label">Active Alerts</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="icon">📝</div>
+            <div class="number">{{ stats.with_notes }}</div>
+            <div class="label">Events with Notes</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="icon">📅</div>
+            <div class="number">{{ stats.by_status.get('open', 0) }}</div>
+            <div class="label">Open Events</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
+            <h3>📌 Status Breakdown</h3>
+            {% for status, count in stats.by_status.items() %}
+                <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee;">
+                    <span class="badge {% if status == 'open' %}badge-open{% else %}badge-closed{% endif %}">
+                        {{ status|title }}
+                    </span>
+                    <span><strong>{{ count }}</strong></span>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Category Breakdown with Bar Chart -->
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
+            <h3>🏷️ Category Distribution</h3>
+            {% if stats.by_category %}
+                {% set max_count = stats.by_category.values()|max %}
+                <div style="margin-top: 15px;">
+                    {% for category, count in stats.by_category.items() %}
+                        <div style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px;">
+                                <span style="font-weight: 500;">{{ category }}</span>
+                                <span style="color: #555;">{{ count }}</span>
+                            </div>
+                            <div style="background: #e8ecf1; border-radius: 8px; height: 22px; overflow: hidden; position: relative;">
+                                <div style="background: linear-gradient(90deg, #1a237e, #42a5f5); height: 100%; width: {{ (count / max_count * 100)|round }}%; border-radius: 8px; transition: width 0.5s ease;">
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted">No category data available</p>
+            {% endif %}
+        </div>
+
+
+
+
+
+
+
+        <!-- Search History -->
+<div class="stat-details">
+    <h3>🔍 Recent Searches</h3>
+    {% if search_history %}
+        <ul style="list-style: none; padding: 0;">
+            {% for item in search_history %}
+                <li style="display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #eee;">
+                    <span>"{{ item.query_text }}"</span>
+                    <span style="color: #888; font-size: 0.85em;">{{ item.searched_at }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">No searches logged yet.</p>
+    {% endif %}
+</div>
+    </div>
+
+    {% if stats.most_recent %}
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-top: 20px;">
+            <h3>🕐 Most Recently Saved</h3>
+            <p><strong>{{ stats.most_recent.title }}</strong></p>
+            <p class="text-muted">Saved: {{ stats.most_recent.saved_at }}</p>
+        </div>
+    {% endif %}
+
+{% else %}
+    <div class="empty-state">
+        <div class="icon">📊</div>
+        <h2>No statistics yet</h2>
+        <p>Start building your watchlist to see statistics!</p>
+        <a href="/browse" class="btn btn-primary">🌍 Browse Events</a>
+    </div>
+{% endif %}
+{% endblock %}

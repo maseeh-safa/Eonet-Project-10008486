@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NASA Natural Events Tracker{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- ===== HEADER ===== -->
+        <header class="main-header">
+            <!-- Left: Logo + Title + Tagline -->
+            <div class="header-left">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" 
+                     alt="NASA Logo" 
+                     class="header-logo">
+                <div class="header-title-group">
+                    <h1>EONET SPACE WATCH</h1>
+                    <p class="header-tagline">Real-time event monitoring from space</p>
+                </div>
+            </div>
+            <!-- Right: Navigation -->
+            <nav class="header-nav">
+                <a href="/" {% if request.path == '/' %}class="active"{% endif %}>🏠 Home</a>
+                <a href="/browse" {% if request.path == '/browse' %}class="active"{% endif %}>🌍 Browse</a>
+                <a href="/watch" {% if request.path == '/watch' %}class="active"{% endif %}>⭐ Watchlist</a>
+                <a href="/stats" {% if request.path == '/stats' %}class="active"{% endif %}>📊 Statistics</a>
+            </nav>
+        </header>
+
+        <!-- FLASH MESSAGES -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- PAGE CONTENT -->
+        {% block content %}{% endblock %}
+
+        <!-- FOOTER -->
+        <div class="footer">
+            Data provided by <a href="https://eonet.gsfc.nasa.gov/" target="_blank">NASA EONET</a>
+            &nbsp;|&nbsp; Built with Flask + SQLite
+            &nbsp;|&nbsp; Data updates from NASA EONET
+        </div>
+    </div>
+</body>
+</html>

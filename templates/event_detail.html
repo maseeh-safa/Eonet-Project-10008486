@@ -1,0 +1,46 @@
+
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} - NASA Natural Events Tracker{% endblock %}
+
+{% block content %}
+<h2>📋 Event Details</h2>
+
+<div style="background: #f8f9fa; padding: 25px; border-radius: 10px; margin: 20px 0;">
+    <h3 style="color: #1a237e; margin-bottom: 15px;">
+        <a href="/event/{{ event.get_eonet_id() }}" style="color: #1a237e; text-decoration: none;">
+            {{ event.title }}
+        </a>
+    </h3>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div>
+            <p><strong>ID:</strong> {{ event.get_eonet_id() }}</p>
+            <p><strong>Category:</strong> <span class="badge badge-category">{{ event.category }}</span></p>
+            <p><strong>Status:</strong> <span class="badge {% if event.is_active() %}badge-open{% else %}badge-closed{% endif %}">{{ event.status }}</span></p>
+            <p><strong>Date:</strong> {% if event.event_date %}{{ event.event_date }}{% else %}Unknown{% endif %}</p>
+        </div>
+        <div>
+            <p><strong>Latitude:</strong> {% if event.latitude != 0 %}{{ event.latitude }}{% else %}Unknown{% endif %}</p>
+            <p><strong>Longitude:</strong> {% if event.longitude != 0 %}{{ event.longitude }}{% else %}Unknown{% endif %}</p>
+            {% if event.magnitude %}
+                <p><strong>Magnitude:</strong> {{ event.magnitude }} {{ event.mag_unit or '' }}</p>
+            {% endif %}
+            {% if event.source_url %}
+                <p><strong>Source:</strong> <a href="{{ event.source_url }}" target="_blank">View Source</a></p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+        <p><strong>Summary:</strong> {{ event.summary() }}</p>
+    </div>
+
+    <div class="btn-group" style="margin-top: 20px;">
+        <form action="/watch/add/{{ event.get_eonet_id() }}" method="POST">
+            <button type="submit" class="btn btn-success">⭐ Add to Watchlist</button>
+        </form>
+        <a href="/browse" class="btn btn-secondary">← Back to Browse</a>
+    </div>
+</div>
+{% endblock %}

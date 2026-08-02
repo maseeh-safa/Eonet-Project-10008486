@@ -1,0 +1,28 @@
+
+{% extends "base.html" %}
+
+{% block title %}Edit Note - NASA Natural Events Tracker{% endblock %}
+
+{% block content %}
+<h2>📝 Edit Note</h2>
+
+<div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+    <strong>{{ event.title }}</strong><br>
+    <span class="badge badge-category">{{ event.category }}</span>
+    <span class="badge {% if event.is_active() %}badge-open{% else %}badge-closed{% endif %}">
+        {{ event.status }}
+    </span>
+</div>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="note">Your Note:</label>
+        <textarea id="note" name="note" placeholder="Add your personal notes about this event...">{{ event.note }}</textarea>
+    </div>
+
+    <div class="btn-group">
+        <button type="submit" class="btn btn-primary">💾 Save Note</button>
+        <a href="/watch" class="btn btn-secondary">❌ Cancel</a>
+    </div>
+</form>
+{% endblock %}

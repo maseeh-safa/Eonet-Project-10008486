@@ -1,0 +1,57 @@
+
+{% extends "base.html" %}
+
+{% block title %}NASA Natural Events Tracker{% endblock %}
+
+{% block content %}
+
+<!-- ===== HERO SECTION: Earth + Content Side by Side ===== -->
+<div class="home-hero">
+    <!-- LEFT: 3D Earth (UNTOUCHED) -->
+    <div class="home-hero-earth">
+        {% include "earth_component.html" %}
+    </div>
+
+    <!-- RIGHT: Welcome + Features -->
+    <div class="home-hero-content">
+        <!-- Welcome Message -->
+        <div class="home-welcome">
+            <h2>Welcome to the NASA Natural Events Tracker</h2>
+            <p>Monitor real-time natural events from around the world using data from NASA's EONET API.</p>
+        </div>
+
+        <!-- 4 Feature Cards -->
+        <div class="home-features">
+            <div class="feature-card">
+                <div class="feature-icon">🛰️</div>
+                <div class="feature-info">
+                    <h3>Live NASA Data</h3>
+                    <p>Real-time events from NASA's EONET API</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⭐</div>
+                <div class="feature-info">
+                    <h3>Personal Watchlist</h3>
+                    <p>Save events and track what matters</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-info">
+                    <h3>Smart Statistics</h3>
+                    <p>View insights and breakdowns</p>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <div class="feature-info">
+                    <h3>Event Alerts</h3>
+                    <p>Get notified for important events</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

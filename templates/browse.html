@@ -1,0 +1,132 @@
+
+{% extends "base.html" %}
+
+{% block title %}Browse Events - NASA Natural Events Tracker{% endblock %}
+
+{% block content %}
+<h2>🌍 Live Events from NASA</h2>
+<p class="text-muted">Showing {{ events|length }} of {{ total_events }} events</p>
+
+    <!-- ===== FILTERS ===== -->
+<div class="browse-controls">
+    <form method="GET" action="/browse" class="controls-form">
+        <!-- Category Filter -->
+        <select name="category" class="filter-select">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+                <option value="{{ cat.slug }}" {% if category_filter == cat.slug %}selected{% endif %}>
+                    {{ cat.label }}
+                </option>
+            {% endfor %}
+        </select>
+
+            <!-- Days Filter -->
+        <div class="control-group">
+            <select name="days" class="filter-select">
+                <option value="">📅 Time Range</option>
+                <option value="1" {% if days_filter == 1 %}selected{% endif %}>Last 24 Hours</option>
+                <option value="7" {% if days_filter == 7 %}selected{% endif %}>Last 7 Days</option>
+                <option value="30" {% if days_filter == 30 %}selected{% endif %}>Last 30 Days</option>
+                <option value="90" {% if days_filter == 90 %}selected{% endif %}>Last 90 Days</option>
+                <option value="365" {% if days_filter == 365 %}selected{% endif %}>Last Year</option>
+            </select>
+        </div>
+
+
+        <!-- Status Filter -->
+        <select name="status" class="filter-select">
+            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>📋 All</option>
+            <option value="open" {% if status_filter == 'open' %}selected{% endif %}>🟢 Open</option>
+            <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>🔴 Closed</option>
+        </select>
+
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+
+        {% if category_filter or status_filter != 'all' or days_filter is not none %}
+            <a href="/browse" class="btn btn-secondary">Clear All</a>
+        {% endif %}
+
+    </form>
+</div>
+
+
+{% if error %}
+
+
+
+    <div class="flash error">{{ error }}</div>
+{% endif %}
+
+{% if events %}
+    <div class="card-grid">
+        {% for event in events %}
+            <div class="card {% if event.get_eonet_id() in watchlist_ids %}in-watchlist{% endif %}">
+                <div class="event-title">
+                    <a href="/event/{{ event.get_eonet_id() }}">{{ event.title }}</a>
+                    {% if event.get_eonet_id() in watchlist_ids %}
+                     <span class="badge badge-saved">⭐ Saved</span>
+                    {% endif %}
+                </div>
+
+                <div style="margin: 8px 0;">
+                    <span class="badge badge-category">{{ event.category }}</span>
+                    <span class="badge {% if event.is_active() %}badge-open{% else %}badge-closed{% endif %}">
+                        {{ event.status }}
+                    </span>
+                </div>
+
+                <div class="event-date">📅 {% if event.event_date %}{{ event.event_date }}{% else %}Date unknown{% endif %}</div>
+                <div class="event-location">📍 {% if event.latitude != 0 or event.longitude != 0 %}{{ event.latitude|round(2) }}, {{ event.longitude|round(2) }}{% else %}Location unknown{% endif %}</div>
+
+                {% if event.magnitude %}
+                <div class="event-magnitude">📊 {{ event.magnitude }} {{ event.mag_unit or '' }}</div>
+                {% endif %}
+
+                <form action="/watch/add/{{ event.get_eonet_id() }}" method="POST" class="btn-group">
+                {% if event.get_eonet_id() in watchlist_ids %}
+                    <button type="button" class="btn btn-secondary" disabled style="opacity: 0.6; cursor: not-allowed;">✅ Already Saved</button>
+                {% else %}
+                    <button type="submit" class="btn btn-success">⭐ Add to Watchlist</button>
+                {% endif %}
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+
+
+
+<!-- ===== PAGINATION ===== -->
+{% if total_pages > 1 %}
+    <div class="pagination">
+        <!-- First Page -->
+        {% if page > 1 %}
+            <a href="{{ url_for('browse', page=1, category=category_filter, status=status_filter) }}" class="btn btn-secondary">⏮ First</a>
+        {% endif %}
+
+        <!-- Previous -->
+        {% if page > 1 %}
+            <a href="{{ url_for('browse', page=page-1, category=category_filter, status=status_filter) }}" class="btn btn-secondary">← Previous</a>
+        {% endif %}
+
+        <!-- Page Info -->
+        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+
+        <!-- Next -->
+        {% if page < total_pages %}
+            <a href="{{ url_for('browse', page=page+1, category=category_filter, status=status_filter) }}" class="btn btn-secondary">Next →</a>
+        {% endif %}
+
+        <!-- Last Page -->
+        {% if page < total_pages %}
+            <a href="{{ url_for('browse', page=total_pages, category=category_filter, status=status_filter) }}" class="btn btn-secondary">Last ⏭</a>
+        {% endif %}
+    </div>
+{% endif %}
+{% else %}
+    <div class="empty-state">
+        <div class="icon">🌊</div>
+        <h2>No events found</h2>
+        <p>The NASA API might be temporarily unavailable. Try again later.</p>
+    </div>
+{% endif %}
+{% endblock %}
